@@ -1,0 +1,41 @@
+name: Publish v1.0.0
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: release-v1.0.0
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Download verified successful Windows build
+        run: gh run download 44944851743 --name TNVED_JSON-Windows --dir release
+      - name: Publish release
+        shell: bash
+        run: |
+          test -s release/TNVED_JSON.exe
+          cat > notes.md <<'NOTES'
+          Первый выпуск генератора JSON с SQL-запросами.
+
+          - Ввод из XLS, XLSX и CSV: код группы и код ТН ВЭД.
+          - Выбор файла, листа Excel, папки вывода и имён двух JSON.
+          - Удаление повторов и восстановление ведущих нулей в ТН ВЭД.
+          - Запросы для связок групп и для справочника ТН ВЭД.
+
+          Скачайте TNVED_JSON.exe и запустите на Windows. Установка Python не требуется.
+          JSON содержит массивы SQL-строк; программа не подключается к базе данных.
+          NOTES
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            echo "Release already exists; no changes made."
+          else
+            gh release create v1.0.0 release/TNVED_JSON.exe --target ba43f359e4ad54370e2b000de7cab230d22d97be --title "v1.0.0 — Генератор JSON для ТН ВЭД" --notes-file notes.md --latest
+          fi
