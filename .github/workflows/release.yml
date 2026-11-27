@@ -25,7 +25,8 @@ jobs:
       - name: Check interface and all output modes
         shell: python
         run: |
-          import json
+          import json, sys, os
+          sys.path.insert(0, os.getcwd())
           import tnved_json as m
           app = m.App()
           app.update()
